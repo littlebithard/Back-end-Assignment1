@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books Library</title>
+    <title>Library Management System</title>
     <style>
         * {
             margin: 0;
@@ -38,6 +38,16 @@
             padding: 25px;
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .auth-card {
+            flex: 1;
         }
 
         .form-group {
@@ -90,35 +100,29 @@
             background: #5568d3;
         }
 
-        .btn-delete {
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-logout {
             background: #e74c3c;
-            padding: 8px 15px;
+            padding: 8px 20px;
             font-size: 14px;
         }
 
-        .btn-delete:hover {
+        .btn-logout:hover {
             background: #c0392b;
         }
 
-        .btn-edit {
-            background: #f39c12;
-            padding: 8px 15px;
-            font-size: 14px;
-            margin-right: 10px;
-        }
-
-        .btn-edit:hover {
-            background: #e67e22;
-        }
-
-        .books-grid {
+        .items-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             margin-top: 20px;
         }
 
-        .book-card {
+        .item-card {
             background: white;
             border-radius: 8px;
             padding: 20px;
@@ -126,26 +130,20 @@
             transition: transform 0.2s;
         }
 
-        .book-card:hover {
+        .item-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
-        .book-title {
+        .item-title {
             font-size: 1.3em;
             color: #667eea;
             margin-bottom: 10px;
         }
 
-        .book-info {
+        .item-info {
             color: #666;
             margin-bottom: 5px;
-        }
-
-        .book-actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
         }
 
         .message {
@@ -167,75 +165,217 @@
             border: 1px solid #f5c6cb;
         }
 
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
         .loading {
             text-align: center;
             color: white;
             font-size: 1.2em;
             margin: 20px 0;
         }
+
+        .user-info {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Books Library</h1>
+        <h1>📚 Library Management System</h1>
 
         <div id="message"></div>
 
-        <div class="card">
-            <h2>Add New Book</h2>
-            <form id="bookForm">
-                <div class="form-group">
-                    <label for="title">Title *</label>
-                    <input type="text" id="title" required>
+        <!-- Authentication Section -->
+        <div id="authSection">
+            <div class="auth-section">
+                <div class="card auth-card">
+                    <h2>Login</h2>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn">Login</button>
+                    </form>
                 </div>
 
-                <div class="form-group">
-                    <label for="author">Author *</label>
-                    <input type="text" id="author" required>
+                <div class="card auth-card">
+                    <h2>Register</h2>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="registerEmail">Email</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Password</label>
+                            <input type="password" id="registerPassword" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role</label>
+                            <select id="role">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn">Register</button>
+                    </form>
                 </div>
-
-                <div class="form-group">
-                    <label for="genre">Genre</label>
-                    <select id="genre">
-                        <option value="Other">Other</option>
-                        <option value="Fiction">Fiction</option>
-                        <option value="Non-Fiction">Non-Fiction</option>
-                        <option value="Mystery">Mystery</option>
-                        <option value="Sci-Fi">Sci-Fi</option>
-                        <option value="Romance">Romance</option>
-                        <option value="Biography">Biography</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="price">Price</label>
-                    <input type="number" id="price" step="1000" min="0">
-                </div>
-
-                <div class="form-group">
-                    <label for="publishedYear">Published Year</label>
-                    <input type="number" id="publishedYear" min="1800" max="2026">
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description"></textarea>
-                </div>
-
-                <button type="submit" class="btn">Add Book</button>
-            </form>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>Book Collection</h2>
-            <div id="loading" class="loading" style="display: none;">Loading books...</div>
-            <div id="booksContainer" class="books-grid"></div>
+        <!-- Main Content (shown after login) -->
+        <div id="mainContent" class="hidden">
+            <div class="user-info">
+                <div>
+                    <strong>Logged in as:</strong> <span id="userEmail"></span>
+                    (<span id="userRole"></span>)
+                </div>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+
+            <!-- Add Book Form (Admin only) -->
+            <div id="addBookSection" class="hidden">
+                <div class="card">
+                    <h2>Add New Book</h2>
+                    <form id="bookForm">
+                        <div class="form-group">
+                            <label for="title">Title *</label>
+                            <input type="text" id="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">Author *</label>
+                            <input type="text" id="author" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="genre">Genre</label>
+                            <select id="genre">
+                                <option value="Other">Other</option>
+                                <option value="Fiction">Fiction</option>
+                                <option value="Non-Fiction">Non-Fiction</option>
+                                <option value="Mystery">Mystery</option>
+                                <option value="Sci-Fi">Sci-Fi</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Biography">Biography</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="number" id="price" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="publishedYear">Published Year</label>
+                            <input type="number" id="publishedYear" min="1000" max="2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea id="description"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Add Book</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="deleteBookSection" class="hidden">
+                <div class="card">
+                    <h2>Delete Book</h2>
+                    <form id="deleteBookForm">
+                        <div class="form-group">
+                            <label for="deleteBookId">Book ID *</label>
+                            <input type="text" id="deleteBookId" required>
+                        </div>
+                        <button type="submit" class="btn">Delete Book</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add Journal Form (Admin only) -->
+            <div id="addJournalSection" class="hidden">
+                <div class="card">
+                    <h2>Add New Journal</h2>
+                    <form id="journalForm">
+                        <div class="form-group">
+                            <label for="jtitle">Title *</label>
+                            <input type="text" id="jtitle" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="publisher">Publisher *</label>
+                            <input type="text" id="publisher" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="issue">Issue *</label>
+                            <input type="text" id="issue" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="jprice">Price</label>
+                            <input type="number" id="jprice" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="publishedYear">Published Year</label>
+                            <input type="number" id="publishedYear" min="1000" max="2026">
+                        </div>
+                        <div class="form-group">
+                            <label for="jdescription">Description</label>
+                            <textarea id="jdescription"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Add Journal</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="deleteJournalSection" class="hidden">
+                <div class="card">
+                    <h2>Delete Journal</h2>
+                    <form id="deleteJournalForm">
+                        <div class="form-group">
+                            <label for="deleteJournalId">Journal ID *</label>
+                            <input type="text" id="deleteJournalId" required>
+                        </div>
+                        <button type="submit" class="btn">Delete Journal</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Books Display -->
+            <div class="card">
+                <h2>Book Collection</h2>
+                <div id="booksContainer" class="items-grid"></div>
+            </div>
+
+            <!-- Journals Display -->
+            <div class="card">
+                <h2>Journal Collection</h2>
+                <div id="journalsContainer" class="items-grid"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = '/api/books';
+        // Global state
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        const BOOKS_API = '/api/books';
+        const JOURNALS_API = '/api/journals';
+        const USERS_API = '/api/users';
 
         // Show message
         function showMessage(text, type = 'success') {
@@ -244,52 +384,145 @@
             setTimeout(() => messageDiv.innerHTML = '', 5000);
         }
 
-        // Load all books
-        async function loadBooks() {
-            const loading = document.getElementById('loading');
-            const container = document.getElementById('booksContainer');
+        // Check authentication on load
+        function checkAuth() {
+            if (authToken && currentUser) {
+                showMainContent();
+            } else {
+                showAuthSection();
+            }
+        }
+
+        function showAuthSection() {
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('hidden');
+        }
+
+        function showMainContent() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userRole').textContent = currentUser.role;
+
+            // Show admin forms if user is admin
+            if (currentUser.role === 'admin') {
+                document.getElementById('addBookSection').classList.remove('hidden');
+                document.getElementById('addJournalSection').classList.remove('hidden');
+            }
+
+            loadBooks();
+            loadJournals();
+        }
+
+        // Register
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                email: document.getElementById('registerEmail').value,
+                password: document.getElementById('registerPassword').value,
+                role: document.getElementById('role').value
+            };
 
             try {
-                loading.style.display = 'block';
-                const response = await fetch(API_URL);
+                const response = await fetch(`${USERS_API}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
                 const result = await response.json();
 
-                loading.style.display = 'none';
+                if (result.success) {
+                    showMessage('Registration successful! Please login.', 'success');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showMessage(result.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Registration failed', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            try {
+                const response = await fetch(`${USERS_API}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    authToken = result.token;
+                    currentUser = result.user;
+                    localStorage.setItem('authToken', authToken);
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showMessage('Login successful!', 'success');
+                    document.getElementById('loginForm').reset();
+                    showMainContent();
+                } else {
+                    showMessage(result.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Login failed', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Logout
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            showMessage('Logged out successfully', 'info');
+            showAuthSection();
+        }
+
+        // Load Books
+        async function loadBooks() {
+            const container = document.getElementById('booksContainer');
+            try {
+                const response = await fetch(BOOKS_API);
+                const result = await response.json();
 
                 if (result.success) {
                     if (result.data.length === 0) {
-                        container.innerHTML = '<p style="text-align: center; color: #666;">No books found. Add your first book!</p>';
+                        container.innerHTML = '<p style="text-align: center; color: #666;">No books found.</p>';
                         return;
                     }
-
                     container.innerHTML = result.data.map(book => `
-                        <div class="book-card">
-                            <div class="book-title">${book.title}</div>
-                            <div class="book-info"><strong>Author:</strong> ${book.author}</div>
-                            ${book.genre ? `<div class="book-info"><strong>Genre:</strong> ${book.genre}</div>` : ''}
-                            ${book.price ? `<div class="book-info"><strong>Price:</strong> $${book.price}</div>` : ''}
-                            ${book.publishedYear ? `<div class="book-info"><strong>Year:</strong> ${book.publishedYear}</div>` : ''}
-                            ${book.description ? `<div class="book-info" style="margin-top: 10px;">${book.description}</div>` : ''}
-                            <div class="book-actions">
-                                <button class="btn btn-delete" onclick="deleteBook('${book._id}')">Delete</button>
-                            </div>
+                        <div class="item-card">
+                            <div class="item-title">${book.title}</div>
+                            <div class="item-info"><strong>Author:</strong> ${book.author}</div>
+                            ${book.genre ? `<div class="item-info"><strong>Genre:</strong> ${book.genre}</div>` : ''}
+                            ${book.price ? `<div class="item-info"><strong>Price:</strong> $${book.price}</div>` : ''}
+                            ${book.publishedYear ? `<div class="item-info"><strong>Year:</strong> ${book.publishedYear}</div>` : ''}
+                            ${book.description ? `<div class="item-info" style="margin-top: 10px;">${book.description}</div>` : ''}
+                            ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-logout" onclick="deleteBookById('${book._id}')">Delete</button>` : ''}
                         </div>
                     `).join('');
                 } else {
                     container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Error loading books</p>';
                 }
             } catch (error) {
-                loading.style.display = 'none';
                 container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load books</p>';
                 console.error('Error:', error);
             }
         }
 
-        // Add new book
+
+        // Add Book
         document.getElementById('bookForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const bookData = {
+            const data = {
                 title: document.getElementById('title').value,
                 author: document.getElementById('author').value,
                 genre: document.getElementById('genre').value,
@@ -297,18 +530,16 @@
                 publishedYear: document.getElementById('publishedYear').value || undefined,
                 description: document.getElementById('description').value || undefined
             };
-
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(BOOKS_API, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: JSON.stringify(bookData)
+                    body: JSON.stringify(data)
                 });
-
                 const result = await response.json();
-
                 if (result.success) {
                     showMessage('Book added successfully!', 'success');
                     document.getElementById('bookForm').reset();
@@ -322,19 +553,15 @@
             }
         });
 
-        // Delete book
-        async function deleteBook(id) {
-            if (!confirm('Are you sure you want to delete this book?')) {
-                return;
-            }
-
+        // Delete Book by button
+        window.deleteBookById = async function (id) {
+            if (!confirm('Are you sure you want to delete this book?')) return;
             try {
-                const response = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE'
+                const response = await fetch(`${BOOKS_API}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-
                 const result = await response.json();
-
                 if (result.success) {
                     showMessage('Book deleted successfully!', 'success');
                     loadBooks();
@@ -347,8 +574,148 @@
             }
         }
 
-        // Load books on page load
-        loadBooks();
+        document.getElementById('deleteBookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bookId = document.getElementById('deleteBookId').value;
+
+            try {
+                const response = await fetch(`${BOOKS_API}/${bookId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('Book deleted successfully!', 'success');
+                    document.getElementById('deleteBookForm').reset();
+                    loadBooks();
+                } else {
+                    showMessage(result.message || 'Error deleting book', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to delete book', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Load Journals
+        async function loadJournals() {
+            const container = document.getElementById('journalsContainer');
+            try {
+                const response = await fetch(JOURNALS_API);
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.data.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #666;">No journals found.</p>';
+                        return;
+                    }
+                    container.innerHTML = result.data.map(journal => `
+                        <div class="item-card">
+                            <div class="item-title">${journal.title}</div>
+                            <div class="item-info"><strong>Publisher:</strong> ${journal.publisher}</div>
+                            <div class="item-info"><strong>Issue:</strong> ${journal.issue}</div>
+                            ${journal.price ? `<div class="item-info"><strong>Price:</strong> $${journal.price}</div>` : ''}
+                            ${journal.publishedDate ? `<div class="item-info"><strong>Date:</strong> ${new Date(journal.publishedDate).toLocaleDateString()}</div>` : ''}
+                            ${journal.description ? `<div class="item-info" style="margin-top: 10px;">${journal.description}</div>` : ''}
+                            ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-logout" onclick="deleteJournalById('${journal._id}')">Delete</button>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Error loading journals</p>';
+                }
+            } catch (error) {
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load journals</p>';
+                console.error('Error:', error);
+            }
+        }
+
+
+        // Add Journal
+        document.getElementById('journalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('jtitle').value,
+                publisher: document.getElementById('publisher').value,
+                issue: document.getElementById('issue').value,
+                price: document.getElementById('jprice').value || undefined,
+                publishedDate: document.getElementById('publishedYear').value || undefined,
+                description: document.getElementById('jdescription').value || undefined
+            };
+            try {
+                const response = await fetch(JOURNALS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('Journal added successfully!', 'success');
+                    document.getElementById('journalForm').reset();
+                    loadJournals();
+                } else {
+                    showMessage(result.message || 'Error adding journal', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to add journal', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Delete Journal by button
+        window.deleteJournalById = async function (id) {
+            if (!confirm('Are you sure you want to delete this journal?')) return;
+            try {
+                const response = await fetch(`${JOURNALS_API}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showMessage('Journal deleted successfully!', 'success');
+                    loadJournals();
+                } else {
+                    showMessage(result.message || 'Error deleting journal', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to delete journal', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        document.getElementById('deleteJournalForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const journalId = document.getElementById('deleteJournalId').value;
+
+            try {
+                const response = await fetch(`${JOURNALS_API}/${journalId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('Journal deleted successfully!', 'success');
+                    document.getElementById('deleteJournalForm').reset();
+                    loadJournals();
+                } else {
+                    showMessage(result.message || 'Error deleting journal', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to delete journal', 'error');
+                console.error('Error:', error);
+            }
+        });
+
+        // Initialize on page load
+        checkAuth();
     </script>
 </body>
 
