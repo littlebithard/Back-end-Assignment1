@@ -189,7 +189,7 @@
         }
 
         .hidden {
-            display: none;
+            display: none !important;
         }
     </style>
 </head>
@@ -200,7 +200,6 @@
 
         <div id="message"></div>
 
-        <!-- Authentication Section -->
         <div id="authSection">
             <div class="auth-section">
                 <div class="card auth-card">
@@ -242,7 +241,6 @@
             </div>
         </div>
 
-        <!-- Main Content (shown after login) -->
         <div id="mainContent" class="hidden">
             <div class="user-info">
                 <div>
@@ -252,7 +250,6 @@
                 <button class="btn btn-logout" onclick="logout()">Logout</button>
             </div>
 
-            <!-- Add Book Form (Admin only) -->
             <div id="addBookSection" class="hidden">
                 <div class="card">
                     <h2>Add New Book</h2>
@@ -307,7 +304,6 @@
                 </div>
             </div>
 
-            <!-- Add Journal Form (Admin only) -->
             <div id="addJournalSection" class="hidden">
                 <div class="card">
                     <h2>Add New Journal</h2>
@@ -354,13 +350,11 @@
                 </div>
             </div>
 
-            <!-- Books Display -->
             <div class="card">
                 <h2>Book Collection</h2>
                 <div id="booksContainer" class="items-grid"></div>
             </div>
 
-            <!-- Journals Display -->
             <div class="card">
                 <h2>Journal Collection</h2>
                 <div id="journalsContainer" class="items-grid"></div>
@@ -404,11 +398,25 @@
             document.getElementById('userEmail').textContent = currentUser.email;
             document.getElementById('userRole').textContent = currentUser.role;
 
-            // Show admin forms if user is admin
-            if (currentUser.role === 'admin') {
-                document.getElementById('addBookSection').classList.remove('hidden');
-                document.getElementById('addJournalSection').classList.remove('hidden');
-            }
+            // List of all ID's that should only be visible to Admins
+            const adminSectionIds = [
+                'addBookSection',
+                'deleteBookSection',
+                'addJournalSection',
+                'deleteJournalSection'
+            ];
+
+            // Toggle logic
+            adminSectionIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (currentUser.role === 'admin') {
+                    // If Admin, SHOW the section
+                    element.classList.remove('hidden');
+                } else {
+                    // If NOT Admin (User), HIDE the section
+                    element.classList.add('hidden');
+                }
+            });
 
             loadBooks();
             loadJournals();
@@ -482,6 +490,11 @@
             currentUser = null;
             localStorage.removeItem('authToken');
             localStorage.removeItem('currentUser');
+
+            // Re-hide admin sections immediately to prevent flickering on next login
+            const adminSectionIds = ['addBookSection', 'deleteBookSection', 'addJournalSection', 'deleteJournalSection'];
+            adminSectionIds.forEach(id => document.getElementById(id).classList.add('hidden'));
+
             showMessage('Logged out successfully', 'info');
             showAuthSection();
         }
