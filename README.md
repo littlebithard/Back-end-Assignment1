@@ -7,7 +7,6 @@ This API manages a library system with two main entities:
 - **Journals**: Secondary object for managing journal/magazine inventory
 
 ## Architecture
-
 ### MVC Pattern Implementation
 
 ```
@@ -44,7 +43,7 @@ Assignment4/
 
 ### Security Features
 1. **Password Hashing**: Uses bcrypt with 10 salt rounds
-2. **JWT Tokens**: Secure token-based authentication (24-hour expiry)
+2. **JWT Tokens**: Secure token-based authentication
 3. **Role-Based Access Control (RBAC)**: Middleware-based permission system
 
 ### Access Control Matrix
@@ -69,6 +68,7 @@ Assignment4/
 ### Installation Steps
 1. **Install Dependencies**
 ```bash
+npm -y init
 npm install
 ```
 
@@ -303,35 +303,6 @@ Same CRUD operations as Books:
 }
 ```
 
-## Testing the API
-
-### Using the Web Interface
-1. Open http://localhost:3000 in your browser
-2. Register an admin account
-3. Login with credentials
-4. Add books and journals using the forms
-
-### Using Postman
-
-1. **Register Admin User**
-```
-POST http://localhost:3000/api/users/register
-Body: { "email": "admin@test.com", "password": "admin123", "role": "admin" }
-```
-
-2. **Login to Get Token**
-```
-POST http://localhost:3000/api/users/login
-Body: { "email": "admin@test.com", "password": "admin123" }
-```
-
-3. **Create Book with Token**
-```
-POST http://localhost:3000/api/books
-Headers: Authorization: Bearer <your_token>
-Body: { "title": "Test Book", "author": "Test Author" }
-```
-
 ## Key Features
 
 1. **Proper MVC Architecture**: Clear separation of concerns
@@ -356,4 +327,3 @@ Body: { "title": "Test Book", "author": "Test Author" }
 - Implement search and filtering
 - Add book borrowing system
 - Add admin dashboard
-- Add email verification
