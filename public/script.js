@@ -93,7 +93,7 @@ async function loadBooks() {
                 <div class="item-title">${item.title}</div>
                 <div class="item-info"><strong>Author:</strong> ${item.author?.name || 'Unknown'}</div>
                 <div class="item-info"><strong>Genre:</strong> ${item.genre}</div>
-                <div class="item-info"><strong>Price:</strong> $${item.price?.toFixed(2) || '0.00'}</div>
+                <div class="item-info"><strong>Price:</strong> ${item.price?.toFixed(2) || '0.00'}</div>
                 <div class="item-info"><strong>Year:</strong> ${item.publishedYear || 'N/A'}</div>
                 <p class="item-info" style="margin-top: 12px; font-style: italic;">${item.description || 'No description provided.'}</p>
                 ${currentUser.role === 'admin' ? `
