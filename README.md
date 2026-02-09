@@ -84,8 +84,8 @@ npm run dev
 # Production
 npm start
 ```
-Access at: `http://localhost:3000`
-
+Access at: `http://localhost:3000` 
+Deployment: `https://back-end-assignment1.onrender.com/`
 ---
 
 ## API Documentation
