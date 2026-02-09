@@ -9,9 +9,14 @@ const bookSchema = new mongoose.Schema({
         maxlength: [200, 'Title cannot exceed 200 characters']
     },
     author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Author',
+        required: [true, 'Author is required']
+    },
+    type: {
         type: String,
-        required: [true, 'Author is required'],
-        trim: true
+        enum: ['book', 'journal'],
+        default: 'book'
     },
     genre: {
         type: String,

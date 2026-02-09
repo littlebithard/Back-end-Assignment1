@@ -2,7 +2,10 @@ const Book = require('../models/Book');
 
 exports.getAll = async (req, res, next) => {
     try {
-        const books = await Book.find().sort({ createdAt: -1 });
+        const books = await Book.find()
+            .populate('author', 'name')
+            .sort({ createdAt: -1 });
+
         res.json({
             success: true,
             count: books.length,
@@ -15,7 +18,8 @@ exports.getAll = async (req, res, next) => {
 
 exports.getOne = async (req, res, next) => {
     try {
-        const book = await Book.findById(req.params.id);
+        const book = await Book.findById(req.params.id)
+            .populate('author', 'name bio nationality');
 
         if (!book) {
             return res.status(404).json({

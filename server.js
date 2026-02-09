@@ -3,7 +3,7 @@ const express = require('express');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const bookRoutes = require('./routes/books');
-const journalRoutes = require('./routes/journals');
+const authorRoutes = require('./routes/authors');
 const userRoutes = require('./routes/users');
 
 const app = express();
@@ -22,13 +22,13 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/books', bookRoutes);
-app.use('/api/journals', journalRoutes);
+app.use('/api/authors', authorRoutes);
 app.use('/api/users', userRoutes);
 
 app.get('/api', (req, res) => {
     res.json({
         message: 'Library API',
-        version: '2.0.0',
+        version: '3.0.0',
         endpoints: {
             books: {
                 getAll: 'GET /api/books',
@@ -37,12 +37,12 @@ app.get('/api', (req, res) => {
                 update: 'PUT /api/books/:id (Admin only)',
                 delete: 'DELETE /api/books/:id (Admin only)'
             },
-            journals: {
-                getAll: 'GET /api/journals',
-                getOne: 'GET /api/journals/:id',
-                create: 'POST /api/journals (Admin only)',
-                update: 'PUT /api/journals/:id (Admin only)',
-                delete: 'DELETE /api/journals/:id (Admin only)'
+            authors: {
+                getAll: 'GET /api/authors',
+                getOneWithBooks: 'GET /api/authors/:id',
+                create: 'POST /api/authors (Admin only)',
+                update: 'PUT /api/authors/:id (Admin only)',
+                delete: 'DELETE /api/authors/:id (Admin only)'
             },
             users: {
                 register: 'POST /api/users/register',

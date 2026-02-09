@@ -56,122 +56,130 @@
         </div>
 
         <div id="mainContent" class="hidden">
-            <div class="user-info">
-                <div>
+            <header class="main-header">
+                <div class="user-info">
                     <strong>Logged in as:</strong> <span id="userEmail"></span>
                     (<span id="userRole"></span>)
                 </div>
                 <button class="btn btn-logout" onclick="logout()">Logout</button>
-            </div>
+            </header>
 
-            <div id="addBookSection" class="hidden">
+            <nav class="tabs">
+                <button class="tab-btn active" onclick="showTab('books')">Books & Journals</button>
+                <button class="tab-btn" onclick="showTab('authors')">Authors</button>
+                <button class="tab-btn admin-only hidden" onclick="showTab('admin')">Admin Panel</button>
+            </nav>
+
+            <section id="booksTab" class="tab-content">
                 <div class="card">
-                    <h2>Add New Book</h2>
-                    <form id="bookForm">
-                        <div class="form-group">
-                            <label for="title">Title *</label>
-                            <input type="text" id="title" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="author">Author *</label>
-                            <input type="text" id="author" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="genre">Genre</label>
-                            <select id="genre">
-                                <option value="Other">Other</option>
-                                <option value="Fiction">Fiction</option>
-                                <option value="Non-Fiction">Non-Fiction</option>
-                                <option value="Mystery">Mystery</option>
-                                <option value="Sci-Fi">Sci-Fi</option>
-                                <option value="Romance">Romance</option>
-                                <option value="Biography">Biography</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="price">Price</label>
-                            <input type="number" id="price" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="publishedYear">Published Year</label>
-                            <input type="number" id="publishedYear" min="1000" max="2026">
-                        </div>
-                        <div class="form-group">
-                            <label for="description">Description</label>
-                            <textarea id="description"></textarea>
-                        </div>
-                        <button type="submit" class="btn">Add Book</button>
-                    </form>
+                    <h2>📚 Collection</h2>
+                    <div id="booksContainer" class="items-grid"></div>
                 </div>
-            </div>
+            </section>
 
-            <div id="deleteBookSection" class="hidden">
+            <section id="authorsTab" class="tab-content hidden">
                 <div class="card">
-                    <h2>Delete Book</h2>
-                    <form id="deleteBookForm">
-                        <div class="form-group">
-                            <label for="deleteBookId">Book ID *</label>
-                            <input type="text" id="deleteBookId" required>
-                        </div>
-                        <button type="submit" class="btn">Delete Book</button>
-                    </form>
+                    <h2>✍️ Author Directory</h2>
+                    <div id="authorsContainer" class="items-grid"></div>
                 </div>
-            </div>
+            </section>
 
-            <div id="addJournalSection" class="hidden">
-                <div class="card">
-                    <h2>Add New Journal</h2>
-                    <form id="journalForm">
-                        <div class="form-group">
-                            <label for="jtitle">Title *</label>
-                            <input type="text" id="jtitle" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="publisher">Publisher *</label>
-                            <input type="text" id="publisher" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="issue">Issue *</label>
-                            <input type="text" id="issue" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jprice">Price</label>
-                            <input type="number" id="jprice" step="0.01" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="publishedDate">Published Date</label>
-                            <input type="date" id="publishedDate" min="1000-01-01" max="2026-12-31">
-                        </div>
-                        <div class="form-group">
-                            <label for="jdescription">Description</label>
-                            <textarea id="jdescription"></textarea>
-                        </div>
-                        <button type="submit" class="btn">Add Journal</button>
-                    </form>
+            <section id="adminTab" class="tab-content hidden">
+                <div class="admin-grid">
+                    <div class="card">
+                        <h2>Add New Entry</h2>
+                        <form id="bookForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="title">Title *</label>
+                                    <input type="text" id="title" placeholder="Enter title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="type">Type *</label>
+                                    <select id="type" required>
+                                        <option value="book">Book</option>
+                                        <option value="journal">Journal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="authorSelect">Author *</label>
+                                    <select id="authorSelect" required>
+                                        <option value="" disabled selected>Select an author</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="genre">Genre</label>
+                                    <select id="genre">
+                                        <option value="Other">Other</option>
+                                        <option value="Fiction">Fiction</option>
+                                        <option value="Non-Fiction">Non-Fiction</option>
+                                        <option value="Mystery">Mystery</option>
+                                        <option value="Sci-Fi">Sci-Fi</option>
+                                        <option value="Romance">Romance</option>
+                                        <option value="Biography">Biography</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="price">Price ($)</label>
+                                    <input type="number" id="price" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="publishedYear">Published Year</label>
+                                    <input type="number" id="publishedYear" min="1000" max="2026" placeholder="YYYY">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="description">Description (Optional)</label>
+                                <textarea id="description" rows="3" placeholder="Brief summary..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Entry</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h2>Manage Authors</h2>
+                        <form id="authorForm">
+                            <div class="form-group">
+                                <label for="authorName">Full Name *</label>
+                                <input type="text" id="authorName" placeholder="Author name" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="authorNationality">Nationality</label>
+                                    <input type="text" id="authorNationality" placeholder="Country">
+                                </div>
+                                <div class="form-group">
+                                    <label for="authorDob">Date of Birth</label>
+                                    <input type="date" id="authorDob">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="authorWebsite">Website URL</label>
+                                <input type="url" id="authorWebsite" placeholder="https://...">
+                            </div>
+                            <div class="form-group">
+                                <label for="authorBio">Biography</label>
+                                <textarea id="authorBio" rows="3" placeholder="Tell us about the author..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Author</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div id="deleteJournalSection" class="hidden">
-                <div class="card">
-                    <h2>Delete Journal</h2>
-                    <form id="deleteJournalForm">
-                        <div class="form-group">
-                            <label for="deleteJournalId">Journal ID *</label>
-                            <input type="text" id="deleteJournalId" required>
-                        </div>
-                        <button type="submit" class="btn">Delete Journal</button>
-                    </form>
+        </div>
+
+        <div id="authorProfileSection" class="modal hidden">
+            <div class="modal-content card">
+                <div class="modal-header">
+                    <h2>Author Profile</h2>
+                    <button class="close-btn" onclick="hideAuthorProfile()">&times;</button>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2>Book Collection</h2>
-                <div id="booksContainer" class="items-grid"></div>
-            </div>
-
-            <div class="card">
-                <h2>Journal Collection</h2>
-                <div id="journalsContainer" class="items-grid"></div>
+                <div id="authorProfile"></div>
             </div>
         </div>
     </div>

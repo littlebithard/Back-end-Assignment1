@@ -2,17 +2,30 @@ let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 
 const BOOKS_API = '/api/books';
-const JOURNALS_API = '/api/journals';
+const AUTHORS_API = '/api/authors';
 const USERS_API = '/api/users';
 
-// Show message
+// --- UI Utilities ---
+
 function showMessage(text, type = 'success') {
-    const messageDiv = document.getElementById('message');
-    messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
-    setTimeout(() => messageDiv.innerHTML = '', 5000);
+    const container = document.getElementById('message');
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.textContent = text;
+    container.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
 }
 
-// Check authentication on load
+function showTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById(`${tabName}Tab`).classList.remove('hidden');
+    event.currentTarget.classList.add('active');
+}
+
+// --- Auth Flow ---
+
 function checkAuth() {
     if (authToken && currentUser) {
         showMainContent();
@@ -32,32 +45,159 @@ function showMainContent() {
     document.getElementById('userEmail').textContent = currentUser.email;
     document.getElementById('userRole').textContent = currentUser.role;
 
-    // List of all ID's that should only be visible to Admins
-    const adminSectionIds = [
-        'addBookSection',
-        'deleteBookSection',
-        'addJournalSection',
-        'deleteJournalSection'
-    ];
-
-    // Toggle logic
-    adminSectionIds.forEach(id => {
-        const element = document.getElementById(id);
-        if (currentUser.role === 'admin') {
-            // If Admin, SHOW the section
-            element.classList.remove('hidden');
-        } else {
-            // If NOT Admin (User), HIDE the section
-            element.classList.add('hidden');
-        }
-    });
+    if (currentUser.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+    }
 
     loadBooks();
-    loadJournals();
+    loadAuthors();
+    populateAuthorDropdowns();
 }
 
-// Register
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
+
+// --- API Operations ---
+
+async function fetchAPI(url, options = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+    try {
+        const response = await fetch(url, { ...options, headers });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'API Error');
+        return result;
+    } catch (error) {
+        showMessage(error.message, 'error');
+        throw error;
+    }
+}
+
+// --- Books & Journals ---
+
+async function loadBooks() {
+    const container = document.getElementById('booksContainer');
+    try {
+        const result = await fetchAPI(BOOKS_API);
+        if (result.data.length === 0) {
+            container.innerHTML = '<p class="info" style="grid-column: 1/-1; text-align: center;">No entries found in the collection.</p>';
+            return;
+        }
+
+        container.innerHTML = result.data.map(item => `
+            <div class="item-card">
+                <span class="type-badge">${item.type}</span>
+                <div class="item-title">${item.title}</div>
+                <div class="item-info"><strong>Author:</strong> ${item.author?.name || 'Unknown'}</div>
+                <div class="item-info"><strong>Genre:</strong> ${item.genre}</div>
+                <div class="item-info"><strong>Price:</strong> $${item.price?.toFixed(2) || '0.00'}</div>
+                <div class="item-info"><strong>Year:</strong> ${item.publishedYear || 'N/A'}</div>
+                <p class="item-info" style="margin-top: 12px; font-style: italic;">${item.description || 'No description provided.'}</p>
+                ${currentUser.role === 'admin' ? `
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-logout" onclick="deleteItem('${item._id}')">Delete</button>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    } catch (e) { }
+}
+
+async function populateAuthorDropdowns() {
+    const dropdown = document.getElementById('authorSelect');
+    if (!dropdown) return;
+
+    try {
+        const result = await fetchAPI(AUTHORS_API);
+        dropdown.innerHTML = '<option value="" disabled selected>Select an author</option>' +
+            result.data.map(a => `<option value="${a._id}">${a.name}</option>`).join('');
+    } catch (e) { }
+}
+
+// --- Authors ---
+
+async function loadAuthors() {
+    const container = document.getElementById('authorsContainer');
+    try {
+        const result = await fetchAPI(AUTHORS_API);
+        if (result.data.length === 0) {
+            container.innerHTML = '<p class="info" style="grid-column: 1/-1; text-align: center;">No authors registered.</p>';
+            return;
+        }
+
+        container.innerHTML = result.data.map(author => `
+            <div class="item-card">
+                <div class="item-title">${author.name}</div>
+                <div class="item-info"><strong>Nationality:</strong> ${author.nationality || 'N/A'}</div>
+                <div class="item-info"><strong>Works in system:</strong> ${author.bookCount || 0}</div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="viewAuthorProfile('${author._id}')" style="flex: 1;">View Profile</button>
+                    ${currentUser.role === 'admin' ? `
+                        <button class="btn btn-logout" onclick="deleteAuthor('${author._id}')">&times;</button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch (e) { }
+}
+
+async function viewAuthorProfile(id) {
+    const profileDiv = document.getElementById('authorProfile');
+    const modal = document.getElementById('authorProfileSection');
+
+    try {
+        const result = await fetchAPI(`${AUTHORS_API}/${id}`);
+        const { author, books } = result.data;
+
+        profileDiv.innerHTML = `
+            <div style="margin-bottom: 30px;">
+                <p><strong>Nationality:</strong> ${author.nationality || 'N/A'}</p>
+                <p><strong>Bio:</strong> ${author.bio || 'None'}</p>
+                ${author.website ? `<p><strong>Website:</strong> <a href="${author.website}" target="_blank">${author.website}</a></p>` : ''}
+            </div>
+            <h3>Books by ${author.name}</h3>
+            <div class="items-grid" style="margin-top: 15px;">
+                ${books.map(b => `
+                    <div class="item-card" style="padding: 15px;">
+                        <span class="type-badge" style="top:10px; right:10px;">${b.type}</span>
+                        <div style="font-weight: 700;">${b.title}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${b.genre} (${b.publishedYear})</div>
+                    </div>
+                `).join('') || '<p>No books found.</p>'}
+            </div>
+        `;
+        modal.classList.remove('hidden');
+    } catch (e) { }
+}
+
+function hideAuthorProfile() {
+    document.getElementById('authorProfileSection').classList.add('hidden');
+}
+
+// --- Form Listeners ---
+
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+        const result = await fetchAPI(`${USERS_API}/login`, {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+        authToken = result.token;
+        currentUser = result.user;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        showMainContent();
+    } catch (e) { }
+});
+
+document.getElementById('registerForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
         email: document.getElementById('registerEmail').value,
@@ -66,300 +206,80 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
     };
 
     try {
-        const response = await fetch(`${USERS_API}/register`, {
+        await fetchAPI(`${USERS_API}/register`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage('Registration successful! Please login.', 'success');
-            document.getElementById('registerForm').reset();
-        } else {
-            showMessage(result.message || 'Registration failed', 'error');
-        }
-    } catch (error) {
-        showMessage('Registration failed', 'error');
-        console.error('Error:', error);
-    }
+        showMessage('Registration successful! Please login.');
+        e.target.reset();
+    } catch (e) { }
 });
 
-// Login
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-        email: document.getElementById('loginEmail').value,
-        password: document.getElementById('loginPassword').value
-    };
-
-    try {
-        const response = await fetch(`${USERS_API}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            authToken = result.token;
-            currentUser = result.user;
-            localStorage.setItem('authToken', authToken);
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            showMessage('Login successful!', 'success');
-            document.getElementById('loginForm').reset();
-            showMainContent();
-        } else {
-            showMessage(result.message || 'Login failed', 'error');
-        }
-    } catch (error) {
-        showMessage('Login failed', 'error');
-        console.error('Error:', error);
-    }
-});
-
-// Logout
-function logout() {
-    authToken = null;
-    currentUser = null;
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-
-    // Re-hide admin sections immediately to prevent flickering on next login
-    const adminSectionIds = ['addBookSection', 'deleteBookSection', 'addJournalSection', 'deleteJournalSection'];
-    adminSectionIds.forEach(id => document.getElementById(id).classList.add('hidden'));
-
-    showMessage('Logged out successfully', 'info');
-    showAuthSection();
-}
-
-// Load Books
-async function loadBooks() {
-    const container = document.getElementById('booksContainer');
-    try {
-        const response = await fetch(BOOKS_API);
-        const result = await response.json();
-
-        if (result.success) {
-            if (result.data.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666;">No books found.</p>';
-                return;
-            }
-            container.innerHTML = result.data.map(book => `
-                        <div class="item-card">
-                            <div class="item-title">${book.title}</div>
-                            <div class="item-info"><strong>Author:</strong> ${book.author}</div>
-                            ${book.genre ? `<div class="item-info"><strong>Genre:</strong> ${book.genre}</div>` : ''}
-                            ${book.price ? `<div class="item-info"><strong>Price:</strong> $${book.price}</div>` : ''}
-                            ${book.publishedYear ? `<div class="item-info"><strong>Year:</strong> ${book.publishedYear}</div>` : ''}
-                            ${book.description ? `<div class="item-info" style="margin-top: 10px;">${book.description}</div>` : ''}
-                            ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-logout" onclick="deleteBookById('${book._id}')">Delete</button>` : ''}
-                        </div>
-                    `).join('');
-        } else {
-            container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Error loading books</p>';
-        }
-    } catch (error) {
-        container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load books</p>';
-        console.error('Error:', error);
-    }
-}
-
-
-// Add Book
-document.getElementById('bookForm').addEventListener('submit', async (e) => {
+document.getElementById('bookForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
         title: document.getElementById('title').value,
-        author: document.getElementById('author').value,
+        type: document.getElementById('type').value,
+        author: document.getElementById('authorSelect').value,
         genre: document.getElementById('genre').value,
-        price: document.getElementById('price').value || undefined,
-        publishedYear: document.getElementById('publishedYear').value || undefined,
-        description: document.getElementById('description').value || undefined
+        price: parseFloat(document.getElementById('price').value) || 0,
+        publishedYear: parseInt(document.getElementById('publishedYear').value),
+        description: document.getElementById('description').value
     };
+
     try {
-        const response = await fetch(BOOKS_API, {
+        await fetchAPI(BOOKS_API, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
             body: JSON.stringify(data)
         });
-        const result = await response.json();
-        if (result.success) {
-            showMessage('Book added successfully!', 'success');
-            document.getElementById('bookForm').reset();
-            loadBooks();
-        } else {
-            showMessage(result.message || 'Error adding book', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to add book', 'error');
-        console.error('Error:', error);
-    }
+        showMessage('Entry added to collection!');
+        e.target.reset();
+        loadBooks();
+    } catch (e) { }
 });
 
-// Delete Book by button
-window.deleteBookById = async function (id) {
-    if (!confirm('Are you sure you want to delete this book?')) return;
-    try {
-        const response = await fetch(`${BOOKS_API}/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        if (result.success) {
-            showMessage('Book deleted successfully!', 'success');
-            loadBooks();
-        } else {
-            showMessage(result.message || 'Error deleting book', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to delete book', 'error');
-        console.error('Error:', error);
-    }
-}
-
-document.getElementById('deleteBookForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const bookId = document.getElementById('deleteBookId').value;
-
-    try {
-        const response = await fetch(`${BOOKS_API}/${bookId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            showMessage('Book deleted successfully!', 'success');
-            document.getElementById('deleteBookForm').reset();
-            loadBooks();
-        } else {
-            showMessage(result.message || 'Error deleting book', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to delete book', 'error');
-        console.error('Error:', error);
-    }
-});
-
-// Load Journals
-async function loadJournals() {
-    const container = document.getElementById('journalsContainer');
-    try {
-        const response = await fetch(JOURNALS_API);
-        const result = await response.json();
-
-        if (result.success) {
-            if (result.data.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #666;">No journals found.</p>';
-                return;
-            }
-            container.innerHTML = result.data.map(journal => `
-                        <div class="item-card">
-                            <div class="item-title">${journal.title}</div>
-                            <div class="item-info"><strong>Publisher:</strong> ${journal.publisher}</div>
-                            <div class="item-info"><strong>Issue:</strong> ${journal.issue}</div>
-                            ${journal.price ? `<div class="item-info"><strong>Price:</strong> $${journal.price}</div>` : ''}
-                            ${journal.publishedDate ? `<div class="item-info"><strong>Date:</strong> ${new Date(journal.publishedDate).toLocaleDateString()}</div>` : ''}
-                            ${journal.description ? `<div class="item-info" style="margin-top: 10px;">${journal.description}</div>` : ''}
-                            ${currentUser && currentUser.role === 'admin' ? `<button class="btn btn-logout" onclick="deleteJournalById('${journal._id}')">Delete</button>` : ''}
-                        </div>
-                    `).join('');
-        } else {
-            container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Error loading journals</p>';
-        }
-    } catch (error) {
-        container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Failed to load journals</p>';
-        console.error('Error:', error);
-    }
-}
-
-
-// Add Journal
-document.getElementById('journalForm').addEventListener('submit', async (e) => {
+document.getElementById('authorForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = {
-        title: document.getElementById('jtitle').value,
-        publisher: document.getElementById('publisher').value,
-        issue: document.getElementById('issue').value,
-        price: document.getElementById('jprice').value || undefined,
-        publishedDate: document.getElementById('publishedYear').value || undefined,
-        description: document.getElementById('jdescription').value || undefined
+        name: document.getElementById('authorName').value,
+        nationality: document.getElementById('authorNationality').value,
+        dateOfBirth: document.getElementById('authorDob').value,
+        website: document.getElementById('authorWebsite').value,
+        bio: document.getElementById('authorBio').value
     };
+
     try {
-        const response = await fetch(JOURNALS_API, {
+        await fetchAPI(AUTHORS_API, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
-            },
             body: JSON.stringify(data)
         });
-        const result = await response.json();
-        if (result.success) {
-            showMessage('Journal added successfully!', 'success');
-            document.getElementById('journalForm').reset();
-            loadJournals();
-        } else {
-            showMessage(result.message || 'Error adding journal', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to add journal', 'error');
-        console.error('Error:', error);
-    }
+        showMessage('Author added successfully!');
+        e.target.reset();
+        loadAuthors();
+        populateAuthorDropdowns();
+    } catch (e) { }
 });
 
-// Delete Journal by button
-window.deleteJournalById = async function (id) {
-    if (!confirm('Are you sure you want to delete this journal?')) return;
+// --- Delete Operations ---
+
+async function deleteItem(id) {
+    if (!confirm('Are you sure?')) return;
     try {
-        const response = await fetch(`${JOURNALS_API}/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        const result = await response.json();
-        if (result.success) {
-            showMessage('Journal deleted successfully!', 'success');
-            loadJournals();
-        } else {
-            showMessage(result.message || 'Error deleting journal', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to delete journal', 'error');
-        console.error('Error:', error);
-    }
+        await fetchAPI(`${BOOKS_API}/${id}`, { method: 'DELETE' });
+        showMessage('Removed from collection');
+        loadBooks();
+    } catch (e) { }
 }
 
-document.getElementById('deleteJournalForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const journalId = document.getElementById('deleteJournalId').value;
-
+async function deleteAuthor(id) {
+    if (!confirm('Are you sure? This will not delete their books, but they will show as "Unknown".')) return;
     try {
-        const response = await fetch(`${JOURNALS_API}/${journalId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        });
-        const result = await response.json();
+        await fetchAPI(`${AUTHORS_API}/${id}`, { method: 'DELETE' });
+        showMessage('Author removed');
+        loadAuthors();
+        populateAuthorDropdowns();
+    } catch (e) { }
+}
 
-        if (result.success) {
-            showMessage('Journal deleted successfully!', 'success');
-            document.getElementById('deleteJournalForm').reset();
-            loadJournals();
-        } else {
-            showMessage(result.message || 'Error deleting journal', 'error');
-        }
-    } catch (error) {
-        showMessage('Failed to delete journal', 'error');
-        console.error('Error:', error);
-    }
-});
-
-// Initialize on page load
+// Bootstrap
 checkAuth();
